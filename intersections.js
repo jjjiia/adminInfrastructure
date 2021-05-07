@@ -74,6 +74,21 @@ var colors = ["#bb7051",
 "#c85782",
 "#73843b"] 
 	
+	var colors = {
+		borough:"#bb7051",
+		zipcode:"#7b62cc",
+		policePrecinct:"#78b642",
+		congressionalDistrict:"#c163b9",
+		stateAssemblyDistrict:"#50b189",
+		stateSenate:"#d24c3c",
+		tract:"#688dcd",
+		schoolDistrict:"#cd9c3f",
+		cityCouncil:"#c85782",
+		fireDivision:"#73843b"
+		
+	}
+	
+	
  Promise.all([d3.json("intersections.json")])
  .then(function(data){
 	   var map = drawMap(data[0])
@@ -127,7 +142,7 @@ function drawMap(intersections){
 			 d3.selectAll(".bars").style("border","none")
 			 d3.select(this).style("border","3px solid black")
 			 for(var k in layers){
-		   		 map.setPaintProperty(layers[k]+"_hover",'fill-opacity',0.2);
+		   		 map.setPaintProperty(layers[k]+"_hover",'fill-opacity',0.1);
 			 }
 	   		 map.setPaintProperty(layerName+"_hover",'fill-opacity',1);
 			 activeLayer  = layerName
@@ -151,6 +166,7 @@ function drawMap(intersections){
 					 if(a=="tract"){
 						 // console.log(currentAdmins[activeLayer][a])
 						 d3.select("#"+layerName+"_shared")
+						 .attr("id",a)
 						 .append("div").html("<strong>"+currentAdmins[activeLayer][a].length+" census tracts</strong>")
 						  .attr("class","shared")//.style("width","200px")
 						 .style("font-size","10px")
@@ -158,9 +174,33 @@ function drawMap(intersections){
 					 }else{
 						 d3.select("#"+layerName+"_shared")
 						 .append("div")
+						 .attr("id",a)
 						  .attr("class","shared").html("<strong>"+layerLabel[a]+"s:</strong> "+currentAdmins[activeLayer][a].join(", "))
 						 .style("padding-right","10px")
 						 .style("font-size","10px")
+						 .style("color",colors[a])
+						 .on("mouseover",function(d){
+							 d3.select(this).style('background-color',"#ddd")
+						 	var oid = d3.select(this).attr("id")
+							 console.log(oid)
+							 console.log(currentAdmins[activeLayer][oid])
+							 console.log(currentAdmins[activeLayer])
+							 
+							 var filter = ["in",layerUniqueIds[oid]].concat(currentAdmins[activeLayer][oid])
+							 //["get","group_"+pub.column]].concat(newColors)
+					   		 map.setPaintProperty(oid+"_hover",'fill-opacity',.8);
+							 
+ 							 map.setFilter(oid+"_hover",filter)
+							 
+						 })
+						 .on("mouseout",function(){
+						 	var oid = d3.select(this).attr("id")
+					   		 map.setPaintProperty(oid+"_hover",'fill-opacity',.1);
+							 console.log(oid)
+							 console.log(currentAdmins[oid]["gid"])
+							 map.setFilter(oid+"_hover",["==",layerUniqueIds[oid],currentAdmins[oid]["gid"]])
+							 d3.select(this).style('background-color',"#fff")
+						 })
 					 }
 					
 				 }
@@ -186,7 +226,7 @@ function drawMap(intersections){
 		 .style("padding-left","4px")
 		 // .style("height","10px")
 		 .html(layerLabel[layers[i]])
-		 .style("background-color",colors[i])
+		 .style("background-color",colors[layers[i]])
 		 .style("color","#fff")
 		 .style("opacity",".8")
 		 //.style("visibility","hidden")
@@ -200,7 +240,7 @@ function drawMap(intersections){
 		 
  		 map.setFilter(layers[i]+"_hover",["==","",""])
    		 map.setPaintProperty(layers[i]+"_hover",'fill-opacity',0);
-		 map.setPaintProperty(layers[i]+"_hover",'fill-color',colors[i]);
+		 map.setPaintProperty(layers[i]+"_hover",'fill-color',colors[layers[i]]);
 		 map.setPaintProperty(layers[i],'fill-opacity',0);
 		 
 		 
@@ -208,6 +248,8 @@ function drawMap(intersections){
 			var feature = c.features[0]
 			//console.log(feature)
 			 d3.selectAll(".shared").remove()
+			 d3.selectAll(".bars").style("border","none")
+			
 
  			var layerName = c.features[0].layer.id
 			var filterKey = layerUniqueIds[layerName]
